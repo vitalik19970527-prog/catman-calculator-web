@@ -4,17 +4,32 @@
 <head>
 <script>
 (function(){
-  // Flutter web's own wheel handler calls preventDefault() on every wheel
-  // event (including Ctrl+wheel), which silently blocks the browser's
-  // native Ctrl+wheel zoom gesture before it can ever fire. Intercepting in
-  // the CAPTURE phase on window runs strictly before Flutter's listener
-  // (attached later, deeper in the DOM, on the bubble phase) and stops it
-  // from ever seeing Ctrl+wheel events at all -- letting the browser's own
-  // default zoom action proceed untouched. Plain (non-Ctrl) wheel scrolling
-  // is left completely alone.
+  // Custom Ctrl+wheel zoom, replacing the browser's native one entirely.
+  // Two reasons native zoom isn't good enough here: (1) its per-notch step
+  // size isn't controllable from a web page at all -- there's no API for
+  // it, so getting exactly 5% steps requires doing zoom ourselves; (2) the
+  // CSS `zoom` property (not `transform: scale`) is used deliberately --
+  // `transform: scale` only shrinks things visually without changing
+  // layout size, so content that should now fit within a smaller-looking
+  // page stays clipped by its unchanged-size scroll container. `zoom`
+  // actually reflows layout at the new size, so more of the app becomes
+  // visible/scrollable exactly like real browser page zoom does.
+  // `zoom` is Chromium/WebKit-only (not Firefox) -- feature-detected below,
+  // falling back to leaving native zoom alone on browsers without it.
+  if (!('zoom' in document.documentElement.style)) return;
+
+  var scale = 1.0;
+  var MIN = 0.5, MAX = 2.0, STEP = 0.05;
+
   window.addEventListener('wheel', function(e){
-    if (e.ctrlKey) { e.stopImmediatePropagation(); }
-  }, {capture: true, passive: true});
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    scale = e.deltaY < 0
+      ? Math.min(MAX, scale + STEP)
+      : Math.max(MIN, scale - STEP);
+    document.body.style.zoom = scale;
+  }, {capture: true, passive: false});
 })();
 </script>
 
@@ -49,7 +64,7 @@
       pyodideUrl: "/pyodide/pyodide.js",
       webRenderer: "auto",
       fontFallbackBaseUrl: "assets/fonts/", // for Noto Emoji, use Google CDN
-      appPackageUrl: "app.tar.gz?v=47883241203f"
+      appPackageUrl: "app.tar.gz?v=0c611e2cac56"
     }
 
     flet.flutterAppLoaded = new Promise((resolve) => {
