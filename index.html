@@ -2,6 +2,22 @@
 <html>
 
 <head>
+<script>
+(function(){
+  // Flutter web's own wheel handler calls preventDefault() on every wheel
+  // event (including Ctrl+wheel), which silently blocks the browser's
+  // native Ctrl+wheel zoom gesture before it can ever fire. Intercepting in
+  // the CAPTURE phase on window runs strictly before Flutter's listener
+  // (attached later, deeper in the DOM, on the bubble phase) and stops it
+  // from ever seeing Ctrl+wheel events at all -- letting the browser's own
+  // default zoom action proceed untouched. Plain (non-Ctrl) wheel scrolling
+  // is left completely alone.
+  window.addEventListener('wheel', function(e){
+    if (e.ctrlKey) { e.stopImmediatePropagation(); }
+  }, {capture: true, passive: true});
+})();
+</script>
+
   <base href="/catman-calculator-web/">
 
   <meta charset="UTF-8">
