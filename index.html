@@ -2,37 +2,6 @@
 <html>
 
 <head>
-<script>
-(function(){
-  // Custom Ctrl+wheel zoom, replacing the browser's native one entirely.
-  // Two reasons native zoom isn't good enough here: (1) its per-notch step
-  // size isn't controllable from a web page at all -- there's no API for
-  // it, so getting exactly 5% steps requires doing zoom ourselves; (2) the
-  // CSS `zoom` property (not `transform: scale`) is used deliberately --
-  // `transform: scale` only shrinks things visually without changing
-  // layout size, so content that should now fit within a smaller-looking
-  // page stays clipped by its unchanged-size scroll container. `zoom`
-  // actually reflows layout at the new size, so more of the app becomes
-  // visible/scrollable exactly like real browser page zoom does.
-  // `zoom` is Chromium/WebKit-only (not Firefox) -- feature-detected below,
-  // falling back to leaving native zoom alone on browsers without it.
-  if (!('zoom' in document.documentElement.style)) return;
-
-  var scale = 1.0;
-  var MIN = 0.5, MAX = 2.0, STEP = 0.05;
-
-  window.addEventListener('wheel', function(e){
-    if (!e.ctrlKey) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    scale = e.deltaY < 0
-      ? Math.min(MAX, scale + STEP)
-      : Math.max(MIN, scale - STEP);
-    document.body.style.zoom = scale;
-  }, {capture: true, passive: false});
-})();
-</script>
-
   <base href="/catman-calculator-web/">
 
   <meta charset="UTF-8">
